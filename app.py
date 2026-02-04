@@ -1,11 +1,12 @@
 """
 📄 Medical AI Roadmap PDF Generator – Streamlit App
-Generates a professional PDF of your 3–6 month roadmap.
+Fully Unicode-safe (supports emojis) and ready for Streamlit Cloud
 """
 
 import streamlit as st
 from fpdf import FPDF
 from io import BytesIO
+import os
 
 # --- PAGE CONFIG ---
 st.set_page_config(page_title="Medical AI Roadmap PDF", page_icon="📄", layout="centered")
@@ -22,21 +23,28 @@ def generate_pdf() -> BytesIO:
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
 
+    # --- ADD UTF-8 FONT ---
+    font_path = "DejaVuSans.ttf"
+    if not os.path.exists(font_path):
+        st.error("DejaVuSans.ttf font file not found. Please upload it in the same folder as app.py.")
+        return None
+    pdf.add_font('DejaVu', '', font_path, uni=True)
+    
     # Title
-    pdf.set_font("Arial", "B", 18)
+    pdf.set_font("DejaVu", "B", 18)
     pdf.multi_cell(0, 10, "🚀 Medical AI + Automation Roadmap", align='C')
     pdf.ln(5)
 
     # Subtitle
-    pdf.set_font("Arial", "I", 12)
+    pdf.set_font("DejaVu", "I", 12)
     pdf.multi_cell(0, 8, "A 3–6 month step-by-step roadmap to build scalable medical tools with Python, Streamlit, and AI", align='C')
     pdf.ln(10)
 
-    # Function to add section
+    # Helper to add sections
     def add_section(title, content):
-        pdf.set_font("Arial", "B", 14)
+        pdf.set_font("DejaVu", "B", 14)
         pdf.multi_cell(0, 8, title)
-        pdf.set_font("Arial", "", 12)
+        pdf.set_font("DejaVu", "", 12)
         pdf.multi_cell(0, 6, content)
         pdf.ln(5)
 
@@ -138,10 +146,11 @@ By Month 3–4, you can have your own mini-hospital tool ecosystem:
 # --- STREAMLIT BUTTON ---
 if st.button("📄 Generate PDF"):
     pdf_file = generate_pdf()
-    st.success("PDF generated successfully!")
-    st.download_button(
-        label="💾 Download Roadmap PDF",
-        data=pdf_file,
-        file_name="Medical_AI_Roadmap.pdf",
-        mime="application/pdf"
-    )
+    if pdf_file:
+        st.success("PDF generated successfully!")
+        st.download_button(
+            label="💾 Download Roadmap PDF",
+            data=pdf_file,
+            file_name="Medical_AI_Roadmap.pdf",
+            mime="application/pdf"
+        )
