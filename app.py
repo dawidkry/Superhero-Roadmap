@@ -1,88 +1,163 @@
+"""
+📱 QR Code Generator Pro + PDF Export
+
+Features:
+- Dynamic QR generator at the top
+- Predefined app QR codes from JSON
+- Grid layout adjusts columns automatically
+- Download buttons for all QR codes
+- QR color customization
+- Add new URLs directly via a Streamlit form
+- Export the list of apps as a PDF (built-in font)
+"""
+
 import streamlit as st
-from fpdf import FPDF
+import qrcode
+from PIL import Image
 from io import BytesIO
+import os
+import json
+import math
+from fpdf import FPDF
 
 # --- PAGE CONFIG ---
-st.set_page_config(page_title="Medical AI Roadmap PDF", page_icon="📄", layout="centered")
-st.title("📄 Medical AI + Automation Roadmap Generator")
+st.set_page_config(page_title="QR Code Generator Pro", page_icon="📱", layout="wide")
+st.title("📱 QR Code Generator Pro Dashboard")
 
-st.markdown("""
-Generate a **professional PDF** of your 3–6 month roadmap for building scalable medical tools with Python, Streamlit, and AI.
-Click the button below to generate the PDF instantly.
-""")
+# --- HELPER FUNCTION TO CREATE QR IMAGE ---
+def generate_qr_image(url: str, fill_color="black", back_color="white") -> Image.Image:
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_H,
+        box_size=8,
+        border=4
+    )
+    qr.add_data(url)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color=fill_color, back_color=back_color).convert("RGB")
+    return img
 
-# --- PDF GENERATOR FUNCTION ---
-def generate_pdf() -> BytesIO:
-    pdf = FPDF(format='A4', unit='mm')
-    pdf.set_auto_page_break(auto=True, margin=15)
+# --- DYNAMIC QR GENERATOR ---
+st.header("🔹 Generate a QR Code for Any URL")
+user_url = st.text_input("Enter a URL here:")
+
+# Optional color customization
+st.subheader("QR Code Colors")
+col1, col2 = st.columns(2)
+with col1:
+    fill_color = st.color_picker("Fill Color", "#000000")
+with col2:
+    back_color = st.color_picker("Background Color", "#ffffff")
+
+if user_url:
+    pil_user = generate_qr_image(user_url, fill_color, back_color)
+    buf = BytesIO()
+    pil_user.save(buf, format="PNG")
+    byte_im = buf.getvalue()
+
+    st.image(byte_im, caption=f"QR Code for {user_url}", use_column_width=False)
+    st.markdown(f"[🔗 Click to open URL]({user_url})")
+    st.download_button(
+        label="💾 Download QR Code",
+        data=byte_im,
+        file_name="dynamic_QR.png",
+        mime="image/png"
+    )
+
+st.divider()
+st.markdown("### Predefined App QR Codes")
+
+# --- CREATE FOLDER FOR SAVED QR CODES ---
+save_folder = "qr_codes"
+if not os.path.exists(save_folder):
+    os.makedirs(save_folder)
+
+# --- LOAD PREDEFINED APPS FROM JSON ---
+json_file = "apps_config.json"
+if not os.path.exists(json_file):
+    with open(json_file, "w") as f:
+        json.dump({}, f)
+
+with open(json_file) as f:
+    apps = json.load(f)
+
+# --- FORM TO ADD NEW URL ---
+st.subheader("➕ Add New App/URL")
+with st.form("add_url_form", clear_on_submit=True):
+    new_name = st.text_input("App Name")
+    new_url = st.text_input("App URL")
+    submit = st.form_submit_button("Add App")
+    if submit and new_name and new_url:
+        apps[new_name] = new_url
+        with open(json_file, "w") as f:
+            json.dump(apps, f, indent=4)
+        st.success(f"Added {new_name}!")
+        st.experimental_rerun()  # Refresh app to show new QR code
+
+# --- PDF GENERATION FUNCTION ---
+def generate_pdf():
+    pdf = FPDF()
     pdf.add_page()
+    pdf.set_font("Arial", size=12)  # Built-in font, no TTF needed
 
-    # --- LOAD FONT DIRECTLY ---
-    pdf.add_font('DejaVu', '', 'DejaVuSans.ttf', uni=True)
-
-    # Title
-    pdf.set_font("DejaVu", "B", 18)
-    pdf.multi_cell(0, 10, "🚀 Medical AI + Automation Roadmap", align='C')
+    pdf.cell(0, 10, "📱 QR Code App List", ln=True, align="C")
     pdf.ln(5)
 
-    # Subtitle
-    pdf.set_font("DejaVu", "I", 12)
-    pdf.multi_cell(0, 8, "A 3–6 month roadmap to build scalable medical tools with Python, Streamlit, and AI", align='C')
-    pdf.ln(10)
+    for i, (name, url) in enumerate(apps.items(), 1):
+        pdf.multi_cell(0, 8, f"{i}. {name}: {url}")
+        pdf.ln(2)
 
-    # Helper function to add sections
-    def add_section(title, content):
-        pdf.set_font("DejaVu", "B", 14)
-        pdf.multi_cell(0, 8, title)
-        pdf.set_font("DejaVu", "", 12)
-        pdf.multi_cell(0, 6, content)
-        pdf.ln(5)
-
-    # Example phases
-    add_section("Phase 1: Foundation (Weeks 1–4)",
-    """
-Goal: Build a base of reusable Streamlit apps + modular code.
-
-1. Medical Calculators Hub (MVP)
-   - Apps: NIHSS, CHADS-BLED, MELD, Ranson.
-   - Real-time score calculation
-   - QR codes for each calculator
-   - Add new calculator via JSON config
-    """)
-
-    add_section("Phase 2: Automation & Sharing (Weeks 5–8)",
-    """
-Goal: Make tools interactive, shareable, and partially automated.
-
-1. Enhanced QR Hub
-   - Remove old calculators
-   - Auto-generate QR codes
-   - Optional color themes
-    """)
-
-    add_section("Phase 3: Integration & Scaling (Weeks 9–12)",
-    """
-Goal: Combine all apps into a unified ecosystem.
-
-1. Central Dashboard
-   - Launch page with all calculators + AI tools
-   - Dynamic QR codes for each tool
-    """)
-
-    # Save PDF to BytesIO
     pdf_buffer = BytesIO()
     pdf.output(pdf_buffer)
     pdf_buffer.seek(0)
     return pdf_buffer
 
-# --- STREAMLIT INTERFACE ---
-if st.button("📄 Generate PDF"):
+# --- BUTTON TO DOWNLOAD PDF ---
+if st.button("📄 Download App List as PDF"):
     pdf_file = generate_pdf()
-    st.success("PDF generated successfully!")
     st.download_button(
-        label="💾 Download Roadmap PDF",
+        label="💾 Download PDF",
         data=pdf_file,
-        file_name="Medical_AI_Roadmap.pdf",
+        file_name="App_List.pdf",
         mime="application/pdf"
     )
 
+# --- RESPONSIVE GRID DISPLAY ---
+total_apps = len(apps)
+if total_apps == 0:
+    st.info("No apps available.")
+else:
+    # Determine columns based on number of apps
+    # Minimum 1 column, max 4 for desktop-friendly layout
+    cols_per_row = min(max(math.ceil(total_apps / 2), 1), 4)
+    cols = st.columns(cols_per_row)
+
+    for i, (name, url) in enumerate(apps.items()):
+        pil_img = generate_qr_image(url)
+
+        # Save PNG locally
+        filename = os.path.join(save_folder, f"{name.replace(' ', '_')}_QR.png")
+        pil_img.save(filename)
+
+        # Convert to BytesIO for display
+        buf = BytesIO()
+        pil_img.save(buf, format="PNG")
+        byte_im = buf.getvalue()
+
+        # Determine column
+        col = cols[i % cols_per_row]
+
+        with col:
+            st.markdown(f"**{name}**")
+            st.image(byte_im, caption=f"Scan to open {name}", use_column_width=True)
+            st.markdown(f"[🔗 Open {name}]({url})")
+            st.download_button(
+                label="💾 Download QR Code",
+                data=byte_im,
+                file_name=f"{name.replace(' ', '_')}_QR.png",
+                mime="image/png"
+            )
+
+        # Start a new row after every cols_per_row
+        if (i + 1) % cols_per_row == 0:
+            cols = st.columns(cols_per_row)
