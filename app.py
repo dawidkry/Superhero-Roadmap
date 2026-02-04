@@ -1,12 +1,12 @@
 """
-🦸‍♂️ Superhero Roadmap PDF Generator – Pro Visual Version
+🦸‍♂️ Superhero Roadmap PDF Generator – Visual Timeline Version
 
 Features:
 - Add roadmap milestones dynamically
 - Reorder steps
 - Optional emoji/icon for each step
 - Highlight color per step
-- Visual PDF timeline layout
+- Visual PDF timeline with arrows connecting steps
 - Download PDF directly
 """
 
@@ -15,8 +15,8 @@ from fpdf import FPDF
 from io import BytesIO
 
 # --- PAGE CONFIG ---
-st.set_page_config(page_title="Superhero Roadmap Pro", page_icon="🦸‍♂️", layout="centered")
-st.title("🦸‍♂️ Superhero Roadmap Pro")
+st.set_page_config(page_title="Superhero Roadmap Timeline", page_icon="🦸‍♂️", layout="centered")
+st.title("🦸‍♂️ Superhero Roadmap Timeline")
 
 # --- INITIALIZE SESSION STATE ---
 if "roadmap_items" not in st.session_state:
@@ -70,15 +70,23 @@ def generate_pdf():
     pdf.cell(0, 10, "🦸‍♂️ Superhero Roadmap", ln=True, align="C")
     pdf.ln(8)
 
-    y_start = pdf.get_y()
-    for item in st.session_state.roadmap_items:
-        # Colored box
-        pdf.set_fill_color(*[int(item['color'].lstrip('#')[i:i+2], 16) for i in (0, 2, 4)])
+    # PDF visual timeline
+    for idx, item in enumerate(st.session_state.roadmap_items):
+        # Colored box for step
+        r, g, b = [int(item['color'].lstrip('#')[i:i+2], 16) for i in (0, 2, 4)]
+        pdf.set_fill_color(r, g, b)
         pdf.set_font("Arial", "B", 14)
         pdf.multi_cell(0, 10, f"{item['icon']} {item['name']}", border=1, fill=True)
-        if item["desc"]:
+        
+        if item['desc']:
             pdf.set_font("Arial", "", 12)
             pdf.multi_cell(0, 8, f"{item['desc']}")
+        
+        # Draw arrow to next step
+        if idx < len(st.session_state.roadmap_items) - 1:
+            pdf.set_font("Arial", "B", 24)
+            pdf.cell(0, 12, "↓", ln=True, align="C")  # Arrow connecting steps
+
         pdf.ln(2)
 
     pdf_buffer = BytesIO()
@@ -87,7 +95,7 @@ def generate_pdf():
     return pdf_buffer
 
 # --- GENERATE PDF BUTTON ---
-if st.button("📄 Generate PDF"):
+if st.button("📄 Generate Visual Timeline PDF"):
     if not st.session_state.roadmap_items:
         st.warning("Add at least one roadmap step before generating the PDF.")
     else:
@@ -95,6 +103,6 @@ if st.button("📄 Generate PDF"):
         st.download_button(
             label="💾 Download Superhero Roadmap PDF",
             data=pdf_file,
-            file_name="superhero_roadmap.pdf",
+            file_name="superhero_roadmap_visual.pdf",
             mime="application/pdf"
         )
