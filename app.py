@@ -1,8 +1,3 @@
-"""
-📄 Medical AI Roadmap PDF Generator – Streamlit App
-Fully self-contained with embedded DejaVuSans.ttf font (Unicode + emojis)
-"""
-
 import streamlit as st
 from fpdf import FPDF
 from io import BytesIO
@@ -13,18 +8,14 @@ st.set_page_config(page_title="Medical AI Roadmap PDF", page_icon="📄", layout
 st.title("📄 Medical AI + Automation Roadmap Generator")
 
 st.markdown("""
-This app generates a **professional PDF** of your 3–6 month roadmap for building scalable medical tools with Python, Streamlit, and AI.
+Generate a **professional PDF** of your 3–6 month roadmap for building scalable medical tools with Python, Streamlit, and AI.
 Click the button below to generate the PDF instantly.
 """)
 
-# --- BASE64-ENCODED DejaVuSans.ttf FONT ---
-# (The font file is embedded in base64, truncated for brevity in example)
-# In practice, you can encode the full DejaVuSans.ttf using Python:
-#   with open("DejaVuSans.ttf", "rb") as f:
-#       base64.b64encode(f.read())
+# --- EMBEDDED FONT BASE64 ---
+# Copy your full font base64 string here from font_base64.txt
 EMBEDDED_FONT_BASE64 = """
-AAEAAAASAQAABAAgR0RFRrRCsIIAAjWsAAACg...
-...rest of font base64 here...
+PASTE-YOUR-FULL-BASE64-HERE
 """
 
 def load_embedded_font():
@@ -34,7 +25,7 @@ def load_embedded_font():
         f.write(font_bytes)
     return font_path
 
-# --- HELPER FUNCTION TO CREATE PDF ---
+# --- PDF GENERATOR FUNCTION ---
 def generate_pdf() -> BytesIO:
     pdf = FPDF(format='A4', unit='mm')
     pdf.set_auto_page_break(auto=True, margin=15)
@@ -51,10 +42,10 @@ def generate_pdf() -> BytesIO:
 
     # Subtitle
     pdf.set_font("DejaVu", "I", 12)
-    pdf.multi_cell(0, 8, "A 3–6 month step-by-step roadmap to build scalable medical tools with Python, Streamlit, and AI", align='C')
+    pdf.multi_cell(0, 8, "A 3–6 month roadmap to build scalable medical tools with Python, Streamlit, and AI", align='C')
     pdf.ln(10)
 
-    # Helper to add sections
+    # Helper function to add sections
     def add_section(title, content):
         pdf.set_font("DejaVu", "B", 14)
         pdf.multi_cell(0, 8, title)
@@ -62,7 +53,7 @@ def generate_pdf() -> BytesIO:
         pdf.multi_cell(0, 6, content)
         pdf.ln(5)
 
-    # --- PHASES ---
+    # Example phases
     add_section("Phase 1: Foundation (Weeks 1–4)",
     """
 Goal: Build a base of reusable Streamlit apps + modular code.
@@ -99,7 +90,7 @@ Goal: Combine all apps into a unified ecosystem.
     pdf_buffer.seek(0)
     return pdf_buffer
 
-# --- STREAMLIT BUTTON ---
+# --- STREAMLIT INTERFACE ---
 if st.button("📄 Generate PDF"):
     pdf_file = generate_pdf()
     st.success("PDF generated successfully!")
@@ -109,4 +100,3 @@ if st.button("📄 Generate PDF"):
         file_name="Medical_AI_Roadmap.pdf",
         mime="application/pdf"
     )
-
