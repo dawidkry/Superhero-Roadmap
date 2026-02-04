@@ -161,3 +161,4 @@ else:
         # Start a new row after every cols_per_row
         if (i + 1) % cols_per_row == 0:
             cols = st.columns(cols_per_row)
+
