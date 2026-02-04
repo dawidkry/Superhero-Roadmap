@@ -7,6 +7,7 @@ import streamlit as st
 from fpdf import FPDF
 from io import BytesIO
 import os
+import requests
 
 # --- PAGE CONFIG ---
 st.set_page_config(page_title="Medical AI Roadmap PDF", page_icon="📄", layout="centered")
@@ -26,7 +27,8 @@ def generate_pdf() -> BytesIO:
     # --- ADD UTF-8 FONT ---
     font_path = "DejaVuSans.ttf"
     if not os.path.exists(font_path):
-        st.error("DejaVuSans.ttf font file not found. Please upload it in the same folder as app.py.")
+        st.warning("⚠️ DejaVuSans.ttf font file not found. Download it here to enable emojis/Unicode support:")
+        st.markdown("[Download DejaVuSans.ttf](https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans.ttf)")
         return None
     pdf.add_font('DejaVu', '', font_path, uni=True)
     
