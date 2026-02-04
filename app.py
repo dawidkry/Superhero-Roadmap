@@ -1,7 +1,6 @@
 import streamlit as st
 from fpdf import FPDF
 from io import BytesIO
-import base64
 
 # --- PAGE CONFIG ---
 st.set_page_config(page_title="Medical AI Roadmap PDF", page_icon="📄", layout="centered")
@@ -12,28 +11,14 @@ Generate a **professional PDF** of your 3–6 month roadmap for building scalabl
 Click the button below to generate the PDF instantly.
 """)
 
-# --- EMBEDDED FONT BASE64 ---
-# Copy your full font base64 string here from font_base64.txt
-EMBEDDED_FONT_BASE64 = """
-PASTE-YOUR-FULL-BASE64-HERE
-"""
-
-def load_embedded_font():
-    font_bytes = base64.b64decode(EMBEDDED_FONT_BASE64)
-    font_path = "DejaVuSans_embedded.ttf"
-    with open(font_path, "wb") as f:
-        f.write(font_bytes)
-    return font_path
-
 # --- PDF GENERATOR FUNCTION ---
 def generate_pdf() -> BytesIO:
     pdf = FPDF(format='A4', unit='mm')
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
 
-    # Load embedded font
-    font_path = load_embedded_font()
-    pdf.add_font('DejaVu', '', font_path, uni=True)
+    # --- LOAD FONT DIRECTLY ---
+    pdf.add_font('DejaVu', '', 'DejaVuSans.ttf', uni=True)
 
     # Title
     pdf.set_font("DejaVu", "B", 18)
@@ -100,3 +85,4 @@ if st.button("📄 Generate PDF"):
         file_name="Medical_AI_Roadmap.pdf",
         mime="application/pdf"
     )
+
